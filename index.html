@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LSPD — Código Penal de LSPD LSNetwork</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0a0e1a;
+    --panel: #111827;
+    --panel2: #151d2e;
+    --border: #1e2d47;
+    --accent: #1a6be0;
+    --accent2: #0f4fa8;
+    --gold: #c8a84b;
+    --gold2: #f0c96b;
+    --red: #c0392b;
+    --text: #c9d6e8;
+    --text2: #8496b0;
+    --white: #e8edf5;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--navy); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; }
+
+  /* scanlines - NEVER block pointer events */
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+    background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(26,107,224,0.022) 2px,rgba(26,107,224,0.022) 4px);
+  }
+
+  /* HEADER */
+  header { background:linear-gradient(135deg,#07090f,#0d1525,#070c18); border-bottom:2px solid var(--accent); position:sticky; top:0; z-index:100; box-shadow:0 4px 40px rgba(26,107,224,0.3); }
+  .header-inner { display:flex; align-items:center; justify-content:space-between; padding:12px 32px; max-width:1400px; margin:0 auto; }
+  .header-left { display:flex; align-items:center; gap:18px; }
+  .badge-svg { width:54px; height:54px; filter:drop-shadow(0 0 8px rgba(200,168,75,0.6)); flex-shrink:0; }
+  .header-title h1 { font-family:'Rajdhani',sans-serif; font-size:1.45rem; font-weight:700; color:var(--gold2); letter-spacing:4px; text-transform:uppercase; line-height:1; }
+  .header-title p { font-family:'Share Tech Mono',monospace; font-size:0.62rem; color:var(--accent); letter-spacing:3px; margin-top:3px; }
+  .header-right { display:flex; align-items:center; gap:10px; }
+  .status-pill { font-family:'Share Tech Mono',monospace; font-size:0.58rem; letter-spacing:2px; padding:4px 10px; border-radius:2px; border:1px solid #4ade80; color:#4ade80; background:rgba(74,222,128,0.08); animation:blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.55} }
+  #adminBtn { font-family:'Rajdhani',sans-serif; font-size:0.8rem; font-weight:600; letter-spacing:2px; padding:8px 18px; background:transparent; border:1px solid var(--gold); color:var(--gold); cursor:pointer; transition:all 0.2s; text-transform:uppercase; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); }
+  #adminBtn:hover, #adminBtn.active { background:var(--gold); color:#000; }
+
+  /* TICKER */
+  .ticker { background:var(--accent2); padding:5px 0; overflow:hidden; }
+  .ticker-inner { display:flex; gap:80px; white-space:nowrap; animation:ticker 35s linear infinite; font-family:'Share Tech Mono',monospace; font-size:0.63rem; letter-spacing:2px; color:rgba(255,255,255,0.7); padding:0 32px; }
+  @keyframes ticker { from{transform:translateX(100vw)}to{transform:translateX(-200%)} }
+
+  /* MAIN */
+  main { max-width:1400px; margin:0 auto; padding:28px 32px; }
+
+  /* ADMIN BANNER */
+  .admin-banner { display:none; background:linear-gradient(90deg,rgba(200,168,75,0.12),transparent); border:1px solid rgba(200,168,75,0.3); border-left:4px solid var(--gold); padding:10px 20px; margin-bottom:18px; font-family:'Share Tech Mono',monospace; font-size:0.7rem; letter-spacing:2px; color:var(--gold); text-transform:uppercase; align-items:center; gap:10px; }
+  body.admin .admin-banner { display:flex; }
+  .banner-logout { margin-left:auto; cursor:pointer; text-decoration:underline; }
+
+  /* STATS */
+  .stats-bar { display:flex; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+  .stat-card { background:var(--panel); border:1px solid var(--border); border-top:2px solid var(--accent); padding:10px 18px; flex:1; min-width:140px; }
+  .stat-card .lbl { font-family:'Share Tech Mono',monospace; font-size:0.58rem; letter-spacing:2px; color:var(--text2); text-transform:uppercase; }
+  .stat-card .val { font-family:'Rajdhani',sans-serif; font-size:1.8rem; font-weight:700; color:var(--gold2); line-height:1.1; }
+
+  /* SEARCH */
+  .search-wrap { position:relative; margin-bottom:24px; }
+  .search-wrap input { width:100%; background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent); color:var(--white); font-family:'Exo 2',sans-serif; font-size:0.9rem; padding:11px 16px 11px 44px; outline:none; transition:border-color 0.2s; }
+  .search-wrap input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(26,107,224,0.15); }
+  .search-wrap input::placeholder { color:var(--text2); }
+  .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--accent); font-size:1.1rem; pointer-events:none; }
+
+  /* CHAPTERS */
+  .chapter { margin-bottom:20px; border:1px solid var(--border); background:var(--panel); }
+  .chapter:hover { border-color:rgba(26,107,224,0.35); }
+  .ch-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; cursor:pointer; user-select:none; background:linear-gradient(90deg,var(--panel2),var(--panel)); border-left:4px solid var(--accent); }
+  .ch-header:hover { background:linear-gradient(90deg,#1a2236,var(--panel2)); }
+  .ch-num { font-family:'Share Tech Mono',monospace; font-size:0.62rem; letter-spacing:2px; color:var(--accent); margin-bottom:2px; }
+  .ch-title { font-family:'Rajdhani',sans-serif; font-size:0.95rem; font-weight:700; letter-spacing:2px; color:var(--white); text-transform:uppercase; }
+  .ch-right { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+  .ch-count { font-family:'Share Tech Mono',monospace; font-size:0.68rem; color:var(--text2); letter-spacing:1px; white-space:nowrap; }
+  .chevron { color:var(--accent); font-size:1rem; transition:transform 0.3s; pointer-events:none; }
+  .chapter.open .chevron { transform:rotate(90deg); }
+
+  /* ADD BUTTON in header */
+  .btn-add-art { display:none; font-family:'Share Tech Mono',monospace; font-size:0.6rem; letter-spacing:1px; padding:5px 11px; background:rgba(34,197,94,0.08); border:1px solid #22c55e; color:#22c55e; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+  .btn-add-art:hover { background:#22c55e; color:#000; }
+  body.admin .btn-add-art { display:inline-block; }
+
+  /* TABLE */
+  .ch-body { display:none; overflow-x:auto; }
+  .chapter.open .ch-body { display:block; }
+  table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+  thead tr { background:rgba(26,107,224,0.07); border-bottom:2px solid var(--accent2); }
+  thead th { padding:9px 14px; text-align:left; font-family:'Share Tech Mono',monospace; font-size:0.58rem; letter-spacing:2px; color:var(--accent); text-transform:uppercase; font-weight:400; }
+  .th-amount, .th-sent { text-align:center; }
+  .th-actions { text-align:center; display:none; width:115px; }
+  body.admin .th-actions { display:table-cell; }
+  tbody tr { border-bottom:1px solid rgba(30,45,71,0.5); transition:background 0.12s; }
+  tbody tr:hover { background:rgba(26,107,224,0.05); }
+  tbody td { padding:11px 14px; vertical-align:middle; }
+  .art-code { font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--gold); white-space:nowrap; letter-spacing:1px; }
+  .art-name { font-weight:600; color:var(--white); font-size:0.86rem; margin-bottom:3px; }
+  .art-desc { font-size:0.76rem; color:var(--text2); line-height:1.5; max-width:560px; }
+  .td-amount { text-align:center; }
+  .td-sent { text-align:center; }
+  .amount-badge { display:inline-block; background:rgba(200,168,75,0.1); border:1px solid rgba(200,168,75,0.3); color:var(--gold2); font-family:'Share Tech Mono',monospace; font-size:0.78rem; padding:3px 10px; white-space:nowrap; }
+  .s-badge { display:inline-block; font-family:'Share Tech Mono',monospace; font-size:0.72rem; padding:3px 10px; letter-spacing:1px; white-space:nowrap; }
+  .s0{color:var(--text2);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);}
+  .s1{color:#fbbf24;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);}
+  .s2{color:#f97316;background:rgba(249,115,22,0.08);border:1px solid rgba(249,115,22,0.25);}
+  .s3{color:#ef4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);}
+  .s4{color:#dc2626;background:rgba(220,38,38,0.12);border:1px solid #dc2626;animation:pr 2s infinite;}
+  @keyframes pr{0%,100%{box-shadow:none}50%{box-shadow:0 0 8px rgba(220,38,38,0.4)}}
+
+  /* ACTION CELLS */
+  .td-actions { display:none; text-align:center; vertical-align:middle; }
+  body.admin .td-actions { display:table-cell; }
+  .action-btns { display:flex; gap:5px; justify-content:center; }
+  .btn-edit,.btn-del { font-family:'Share Tech Mono',monospace; font-size:0.6rem; letter-spacing:1px; padding:5px 9px; border:1px solid; cursor:pointer; background:transparent; transition:all 0.15s; white-space:nowrap; }
+  .btn-edit { color:var(--accent); border-color:var(--accent); }
+  .btn-edit:hover { background:var(--accent); color:#fff; }
+  .btn-del { color:var(--red); border-color:var(--red); }
+  .btn-del:hover { background:var(--red); color:#fff; }
+
+  /* MODALS */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(5,8,16,0.88); z-index:200; backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:20px; }
+  .overlay.show { display:flex; }
+  .modal { background:var(--panel2); border:1px solid var(--border); border-top:3px solid var(--accent); width:100%; max-width:520px; padding:28px; position:relative; box-shadow:0 20px 80px rgba(0,0,0,0.7); animation:min-in 0.22s ease; }
+  @keyframes min-in{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+  .modal.danger{border-top-color:var(--red);}
+  .modal h2 { font-family:'Rajdhani',sans-serif; font-size:1.2rem; font-weight:700; letter-spacing:3px; color:var(--gold2); margin-bottom:6px; text-transform:uppercase; }
+  .modal.danger h2{color:#ef4444;}
+  .modal-sub { font-size:0.78rem; color:var(--text2); margin-bottom:20px; }
+  .close-x { position:absolute; top:12px; right:14px; background:none; border:none; color:var(--text2); font-size:1.1rem; cursor:pointer; padding:4px 8px; line-height:1; }
+  .close-x:hover{color:var(--white);}
+  .fg { margin-bottom:13px; }
+  .fg label { display:block; font-family:'Share Tech Mono',monospace; font-size:0.6rem; letter-spacing:2px; color:var(--accent); margin-bottom:5px; text-transform:uppercase; }
+  .fg input,.fg textarea,.fg select { width:100%; background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--border); color:var(--white); font-family:'Exo 2',sans-serif; font-size:0.86rem; padding:9px 12px; outline:none; transition:border-color 0.2s; }
+  .fg input:focus,.fg textarea:focus,.fg select:focus{border-left-color:var(--accent);border-color:rgba(26,107,224,0.4);}
+  .fg textarea{resize:vertical;min-height:72px;}
+  .fg select option{background:#111827;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;}
+  .btn-p { font-family:'Rajdhani',sans-serif; font-size:0.88rem; font-weight:700; letter-spacing:2px; padding:9px 22px; background:var(--accent); border:none; color:#fff; cursor:pointer; text-transform:uppercase; transition:background 0.2s; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); }
+  .btn-p:hover{background:#2277f0;}
+  .btn-p.danger{background:var(--red);}
+  .btn-p.danger:hover{background:#e74c3c;}
+  .btn-s { font-family:'Rajdhani',sans-serif; font-size:0.88rem; font-weight:600; letter-spacing:2px; padding:9px 22px; background:transparent; border:1px solid var(--border); color:var(--text2); cursor:pointer; text-transform:uppercase; transition:all 0.2s; clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%); }
+  .btn-s:hover{border-color:var(--text2);color:var(--white);}
+  .err-msg { color:#ef4444; font-family:'Share Tech Mono',monospace; font-size:0.65rem; letter-spacing:1px; margin-top:7px; display:none; }
+
+  /* TOAST */
+  #toast { position:fixed; bottom:24px; right:24px; z-index:300; background:var(--panel2); border:1px solid var(--border); border-left:4px solid #22c55e; padding:11px 18px; font-family:'Share Tech Mono',monospace; font-size:0.7rem; letter-spacing:1px; color:#4ade80; transform:translateX(140%); transition:transform 0.3s; box-shadow:0 8px 30px rgba(0,0,0,0.5); max-width:280px; }
+  #toast.show{transform:translateX(0);}
+  #toast.err{border-left-color:var(--red);color:#ef4444;}
+
+  footer { border-top:1px solid var(--border); padding:16px 32px; text-align:center; font-family:'Share Tech Mono',monospace; font-size:0.58rem; letter-spacing:2px; color:var(--text2); margin-top:32px; }
+  mark { background:rgba(26,107,224,0.3); color:var(--white); border-radius:2px; padding:0 2px; }
+  @media(max-width:768px){main{padding:14px 16px;}.header-inner{padding:10px 14px;}.header-title h1{font-size:1rem;}.stats-bar{display:none;}}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD MODAL -->
+<div class="overlay" id="pwOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeModal('pwOverlay')">✕</button>
+    <h2>🔐 Acceso Admin</h2>
+    <p class="modal-sub">Introduce la contraseña de administrador para habilitar la edición completa.</p>
+    <div class="fg">
+      <label>Contraseña</label>
+      <input type="password" id="pwInput" placeholder="••••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+      <div class="err-msg" id="pwErr">⚠ CONTRASEÑA INCORRECTA — ACCESO DENEGADO</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-s" onclick="closeModal('pwOverlay')">Cancelar</button>
+      <button class="btn-p" onclick="checkPw()">Acceder</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT / ADD MODAL -->
+<div class="overlay" id="editOverlay">
+  <div class="modal" style="max-width:600px">
+    <button class="close-x" onclick="closeModal('editOverlay')">✕</button>
+    <h2 id="editTitle">✏ Editar Artículo</h2>
+    <p class="modal-sub" id="editSub">Modifica los campos del artículo seleccionado.</p>
+    <input type="hidden" id="editId">
+    <input type="hidden" id="editMode">
+    <div class="fg">
+      <label>Capítulo</label>
+      <select id="editCap" onchange="capChanged()"></select>
+    </div>
+    <div class="fg" id="newCapFg" style="display:none">
+      <label>Nombre del nuevo capítulo</label>
+      <input type="text" id="newCapName" placeholder="Ej: 21. DELITOS INFORMATICOS">
+    </div>
+    <div class="form-row">
+      <div class="fg">
+        <label>Código</label>
+        <input type="text" id="editCod" placeholder="Ej: 1.01.">
+      </div>
+      <div class="fg">
+        <label>Nombre del artículo</label>
+        <input type="text" id="editNom" placeholder="Ej: No obedecer a un agente">
+      </div>
+    </div>
+    <div class="fg">
+      <label>Descripción</label>
+      <textarea id="editDesc" rows="3" placeholder="Descripción detallada del artículo..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="fg">
+        <label>Multa ($)</label>
+        <input type="number" id="editCant" min="0" placeholder="500">
+      </div>
+      <div class="fg">
+        <label>Condena en meses (0 = solo multa)</label>
+        <input type="number" id="editSent" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-s" onclick="closeModal('editOverlay')">Cancelar</button>
+      <button class="btn-p" id="editSaveBtn" onclick="saveArticle()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="overlay" id="delOverlay">
+  <div class="modal danger" style="max-width:420px">
+    <button class="close-x" onclick="closeModal('delOverlay')">✕</button>
+    <h2>⚠ Eliminar Artículo</h2>
+    <p class="modal-sub" id="delDesc">¿Seguro que deseas eliminar este artículo? Esta acción no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="btn-s" onclick="closeModal('delOverlay')">Cancelar</button>
+      <button class="btn-p danger" onclick="confirmDelete()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,0.92);z-index:400;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="width:48px;height:48px;border:3px solid #1e2d47;border-top:3px solid #1a6be0;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+  <div id="loadingMsg" style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;letter-spacing:3px;color:#8496b0;text-transform:uppercase;">Conectando...</div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+<header>
+  <div class="header-inner">
+    <div class="header-left">
+      <svg class="badge-svg" viewBox="0 0 60 60" fill="none">
+        <polygon points="30,3 38,13 51,11 49,24 59,30 49,36 51,49 38,47 30,57 22,47 9,49 11,36 1,30 11,24 9,11 22,13" fill="#0d1525" stroke="#c8a84b" stroke-width="2"/>
+        <polygon points="30,10 36,18 45,16 43,25 50,30 43,35 45,44 36,42 30,50 24,42 15,44 17,35 10,30 17,25 15,16 24,18" fill="#0a1020" stroke="#f0c96b" stroke-width="1"/>
+        <text x="30" y="34" text-anchor="middle" fill="#c8a84b" font-size="11" font-weight="bold" font-family="Rajdhani,sans-serif">LSPD</text>
+      </svg>
+      <div class="header-title">
+        <h1>Código Penal · LSPD LSNetwork</h1>
+        <p>LOS SANTOS POLICE DEPARTMENT — SISTEMA DE GESTIÓN LEGAL v2.2</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="status-pill">● SISTEMA EN LÍNEA</span>
+      <button id="adminBtn" onclick="toggleAdmin()">🔒 Admin</button>
+    </div>
+  </div>
+  <div class="ticker">
+    <div class="ticker-inner">
+      <span>CÓDIGO PENAL DE LSPD LSNetwork</span><span>★</span>
+      <span>DEPARTAMENTO DE POLICÍA DE LOS SANTOS</span><span>★</span>
+      <span>USO OFICIAL — CONFIDENCIAL</span><span>★</span>
+      <span>PROHIBIDA LA DISTRIBUCIÓN NO AUTORIZADA</span><span>★</span>
+      <span>ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</span><span>★</span>
+      <span>CÓDIGO PENAL DE LSPD LSNetwork</span><span>★</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="admin-banner">
+    <span>⚡</span><span>MODO ADMINISTRADOR ACTIVO — EDICIÓN, AÑADIR Y ELIMINAR HABILITADOS</span>
+    <span class="banner-logout" onclick="toggleAdmin()">[ CERRAR SESIÓN ]</span>
+  </div>
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="Buscar por artículo, descripción o código..." oninput="renderAll()">
+  </div>
+  <div id="chaptersContainer"></div>
+</main>
+
+<footer>LOS SANTOS POLICE DEPARTMENT · CÓDIGO PENAL DE LSPD LSNetwork · ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</footer>
+
+<script type="module">
+// ─── FIREBASE ────────────────────────────────────────────────────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAFdnu3l239Gri8QIbV7QPlvN9YmJF7xjU",
+  authDomain: "lspd-codigo-penal.firebaseapp.com",
+  projectId: "lspd-codigo-penal",
+  storageBucket: "lspd-codigo-penal.firebasestorage.app",
+  messagingSenderId: "140965010690",
+  appId: "1:140965010690:web:d93bf36a6b05e1569a761b"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const colRef = collection(db, "articles");
+
+// ─── PASSWORD ────────────────────────────────────────────────────────────────
+const PASS_HASH = "2e3072c07b5654069e10282cc13fd5c106411920c4289792d52f991914358b50";
+async function hashInput(str) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+let isAdmin = false;
+let openChaps = new Set(['1']);
+let pendingDelId = null;
+let articles = [];
+let dbLoaded = false;
+
+// ─── DEFAULT DATA (se sube a Firebase la primera vez) ────────────────────────
+const DEFAULT_ARTICLES = [
+  {id:"1",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.01.",nom:"No obedecer a un agente que regula el trafico",desc:"Hacer caso omiso a las indicaciones de un agente que regula el trafico",cant:50,sent:0},
+  {id:"2",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.02.",nom:"Uso excesivo del claxon",desc:"Utilizar de forma inapropiada y repetida el claxon",cant:50,sent:0},
+  {id:"3",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.03.",nom:"Giro indebido",desc:"Hacer un cambio de sentido en zona no habilitada o pisando la linea continua",cant:50,sent:0},
+  {id:"4",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.04.",nom:"Circular en sentido contrario",desc:"Conducir o invadir con el vehiculo el sentido contrario de la circulacion",cant:150,sent:0},
+  {id:"5",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.05.",nom:"Mal estacionamiento",desc:"El estacionamiento que se realiza en un lugar no habilitado o autorizado",cant:100,sent:0},
+  {id:"6",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.06.",nom:"Obstruir la circulacion",desc:"Impedir o dificultar la circulacion de trafico",cant:100,sent:0},
+  {id:"7",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.07.",nom:"Ignorar las señales de trafico",desc:"No hacer caso a cualquier tipo de señal de trafico",cant:100,sent:0},
+  {id:"8",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.08.",nom:"Saltarse un semaforo",desc:"Saltarse o no realizar una parada de minimo tres segundos ante un semaforo",cant:100,sent:0},
+  {id:"9",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.09.",nom:"No ceder el paso a vehiculos de emergencia",desc:"Obstaculizar con un vehiculo o a pie el paso y las labores de vehiculos de emergencia",cant:250,sent:0},
+  {id:"10",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.10.",nom:"Adelantamiento indebido",desc:"Adelantar a un vehiculo por la derecha fuera del poblado o pisando linea continua",cant:100,sent:0},
+  {id:"11",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.11.",nom:"Circular marcha atras",desc:"Circular de forma excesiva o indebida marcha atras",cant:100,sent:0},
+  {id:"12",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.12.",nom:"Conduccion del vehiculo en malas condiciones",desc:"Circular con el vehiculo con daños visibles en chapa y cristales",cant:200,sent:0},
+  {id:"13",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.13.",nom:"Circular con las luces apagadas",desc:"Circular con las luces de cruce o largas sin estar encendidas cuando sea de noche",cant:200,sent:0},
+  {id:"14",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.14.",nom:"Circular en motocicleta sin casco",desc:"Circular en una motocicleta o ciclomotor sin casco",cant:75,sent:0},
+  {id:"15",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.15.",nom:"Conduccion temeraria",desc:"Circular poniendo en grave peligro a los ciudadanos o conductores. SE INCLUYE EXCESO DE VELOCIDAD E IGNORAR SEÑALES DE TRAFICO",cant:100,sent:0},
+  {id:"16",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.16.",nom:"Omitir las indicaciones de los carteles de Trafico",desc:"Hacer caso omiso a las indicaciones de los letreros luminosos de trafico tanto en vias como en vehiculos policiales",cant:250,sent:0},
+  {id:"17",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.17.",nom:"Saltar u omitir un control de trafico",desc:"No detenerse en un control de trafico y omitir la señalizacion. SE INCLUYE HUIDA DE LA JUSTICIA",cant:150,sent:5},
+  {id:"18",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.18.",nom:"Exceso de velocidad en via urbana",desc:"Velocidad superior a 80 km/h en via urbana. Si supera 180 km/h se aplican 8 meses. REQUIERE RADAR",cant:250,sent:0},
+  {id:"19",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.19.",nom:"Exceso de velocidad en autovias",desc:"Velocidad superior a 140 km/h en vias interurbanas. Por encima de 200 km/h se aplican 10 meses. REQUIERE RADAR",cant:250,sent:0},
+  {id:"20",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.20.",nom:"Uso del Telefono Movil al Volante",desc:"Usar el dispositivo movil sin manos libres durante la conduccion",cant:200,sent:0},
+  {id:"21",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.21.",nom:"No respetar un paso de peatones",desc:"No ceder el paso a los peatones que intenten o esten atravesando el paso de peatones",cant:200,sent:0},
+  {id:"22",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.22.",nom:"Conducir bajo los efectos del alcohol",desc:"Test de alcoholemia por encima del maximo permitido. Maximo dos pruebas, se toma el resultado de menor valor",cant:450,sent:7},
+  {id:"23",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.23.",nom:"Conducir bajo los efectos de sustancias estupefacientes",desc:"Test de droga positivo por encima del valor permitido. Maximo dos pruebas, resultado de menor valor",cant:600,sent:9},
+  {id:"24",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.24.",nom:"Abandono de vehiculo en via urbana",desc:"Dejar el vehiculo personal abandonado interfiriendo la circulacion o sin moverlo durante un largo lapso de tiempo",cant:400,sent:0},
+  {id:"25",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.25.",nom:"Pilotar una aeronave sin licencia",desc:"Pilotar una aeronave sin una licencia de vuelo habilitada",cant:3000,sent:12},
+  {id:"26",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.26.",nom:"Pilotar una aeronave en mal estado",desc:"Pilotar una nave en mal estado o dañada",cant:1000,sent:0},
+  {id:"27",cap:"1. DELITOS CONTRA LA SEGURIDAD VIAL",cod:"1.27.",nom:"Trafico aereo",desc:"Embarque de drogas, explosivos, armas, gases toxicos, sustancias inflamables o de caracter peligroso",cant:1500,sent:12},
+  {id:"28",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.01.",nom:"Disturbios en vias publicas",desc:"Castiga a quienes discuten con tumultos utilizando medios que pongan en peligro la vida o integridad de las personas",cant:450,sent:8},
+  {id:"29",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.02.",nom:"Agresion a un civil",desc:"El que realice una accion violenta a otra persona con la intencion de causar daño",cant:750,sent:6},
+  {id:"30",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.03.",nom:"Alteracion del orden publico",desc:"Quienes alteren la paz publica ejecutando actos de violencia sobre las personas o cosas",cant:500,sent:6},
+  {id:"31",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.04.",nom:"Allanamiento de morada",desc:"El particular que, sin habitar en ella, entrare en morada ajena o se mantuviera en la misma contra la voluntad de su dueño",cant:350,sent:6},
+  {id:"32",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.05.",nom:"Delito de odio",desc:"Infraccion legal donde se aplique odio o discriminacion contra religion, sexo u otros motivos contemplados por la ley",cant:300,sent:5},
+  {id:"33",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.06.",nom:"Dañar el mobiliario urbano",desc:"Causar daños de cualquier tipo al mobiliario urbano de la ciudad",cant:200,sent:0},
+  {id:"34",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.07.",nom:"Acoso psicologico",desc:"El que atente contra la dignidad e integridad moral de otro",cant:250,sent:0},
+  {id:"35",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.08.",nom:"Suplantacion de identidad",desc:"Hacerse pasar por otra persona asumiendo su identidad en publico o privado para acceder a recursos o beneficios",cant:2000,sent:8},
+  {id:"36",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.09.",nom:"Circular por la via publica con el rostro oculto",desc:"Llevar el rostro oculto en parte o de manera total durante la conduccion o en la via publica",cant:250,sent:0},
+  {id:"37",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.10.",nom:"Circular por la via publica desnudo o semidesnudo",desc:"Ir por la via publica mostrando partes del cuerpo por la ausencia de prendas de ropa",cant:150,sent:0},
+  {id:"38",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.11.",nom:"Participacion en carreras ilegales",desc:"Formar parte de una carrera ilegal o siendo el organizador de esta",cant:400,sent:5},
+  {id:"39",cap:"2. DELITOS CONTRA LA LIBERTAD, LA INTEGRIDAD FISICA, Y CONDUCTAS ERRONEAS",cod:"2.12.",nom:"Comercializacion ilegal",desc:"Venta de servicios de todo tipo sin los permisos necesarios de las autoridades o el gobierno",cant:250,sent:0},
+  {id:"40",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.01.",nom:"Hurto",desc:"El que, con animo de lucro, tomara las cosas ajenas sin la voluntad de su dueño",cant:250,sent:5},
+  {id:"41",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.02.",nom:"Robo con fuerza o intimidacion",desc:"Con animo de lucro, apoderarse de las cosas ajenas empleando fuerza, violencia o intimidacion",cant:500,sent:5},
+  {id:"42",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.03.",nom:"Complice de robo con fuerza o intimidacion",desc:"El que contribuye de forma interesada en el operativo del robo. Incluye porte de armas, huida de la justicia, secuestro o robo de vehiculo",cant:250,sent:5},
+  {id:"43",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.04.",nom:"Robo de vehiculo",desc:"El que sustrae o utiliza sin la debida autorizacion un vehiculo a motor o ciclomotor ajeno",cant:250,sent:5},
+  {id:"44",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.05.",nom:"Robo de vehiculo de importacion",desc:"El que sustrae o utiliza sin autorizacion un vehiculo a motor de importacion. Incluye huida de la justicia y rostro oculto",cant:1000,sent:5},
+  {id:"45",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.06.",nom:"Robo con fuerza en casa o domicilio",desc:"Con animo de lucro, apoderarse de las cosas muebles empleando fuerza",cant:750,sent:5},
+  {id:"46",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.07.",nom:"Robo menor",desc:"Robo a mano armada de caja registradora de negocio menor o ATM. Incluye porte de armas, huida, rostro oculto, secuestro y robo de vehiculo",cant:1500,sent:7},
+  {id:"47",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.07.2.",nom:"Complice de robo menor",desc:"El que contribuye de forma interesada en el operativo es complice del robo",cant:750,sent:5},
+  {id:"48",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.08.",nom:"Robo a un furgon blindado",desc:"Apoderarse de los bienes de un furgon blindado empleando violencia o intimidacion",cant:1500,sent:10},
+  {id:"49",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.08.2.",nom:"Complice a robo de furgon blindado",desc:"El que obstruye de forma interesada el operativo. Incluye: rostro oculto, porte de armas, huida, secuestro y robo de vehiculo",cant:750,sent:5},
+  {id:"50",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.09.",nom:"Robo a joyeria",desc:"Apoderarse de los bienes de una joyeria o galeria de arte empleando violencia o intimidacion",cant:4500,sent:10},
+  {id:"51",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.09.2.",nom:"Complice a robo de joyeria",desc:"El que obstruye de forma interesada el operativo es complice del robo",cant:4500,sent:5},
+  {id:"52",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.10.",nom:"Robo a Ammu-Nation",desc:"El robo de las vitrinas de este establecimiento. Incluye porte de armas, rostro oculto, huida, secuestro y robo de vehiculo",cant:3250,sent:5},
+  {id:"53",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.10.2.",nom:"Complice de robo a Ammu-Nation",desc:"El que obstruye de forma interesada el operativo. Incluye porte de armas, rostro oculto, huida, secuestro y robo de vehiculo",cant:1500,sent:5},
+  {id:"54",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.11.",nom:"Robo al Lifeinvader",desc:"Asaltar el local Lifeinvader a la fuerza o por intimidacion",cant:8000,sent:15},
+  {id:"55",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.11.2.",nom:"Complice de robo LifeInvader",desc:"Ser complice del robo obstruyendo el operativo",cant:4000,sent:10},
+  {id:"56",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.13.",nom:"Robo a sucursal bancaria",desc:"Apoderarse de los bienes empleando violencia o intimidacion al cometer el delito o para proteger la huida",cant:6500,sent:10},
+  {id:"57",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.13.2.",nom:"Complice robo a sucursal bancaria",desc:"Obstruir intencionadamente el operativo para cubrir la huida",cant:4250,sent:10},
+  {id:"58",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.",nom:"Robo a Banco Federal",desc:"Robar la caja fuerte de la reserva del condado de LSPD LSNetwork o Blaine",cant:15000,sent:25},
+  {id:"59",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.2.",nom:"Complice de robo federal",desc:"El que obstruya intencionadamente el operativo del robo a beneficio de los atracadores",cant:12250,sent:15},
+  {id:"60",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.15.",nom:"Robo a los laboratorios Humane",desc:"Asaltar con animo de lucro los laboratorios empleando violencia o intimidacion",cant:10000,sent:15},
+  {id:"61",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.15.2.",nom:"Complice robo a laboratorio Humane",desc:"Realizar actos que pongan en peligro el operativo del robo de manera consciente",cant:7500,sent:15},
+  {id:"62",cap:"4. DELITOS DE Y PARA LOS SERVICIOS ESTATALES Y/O AUTONOMOS",cod:"4.01.",nom:"Estafa de un local o servicio",desc:"El local o servicio que, con animo de lucro, mienta o engañe obteniendo beneficio y atentando contra el patrimonio de otro",cant:750,sent:0},
+  {id:"63",cap:"4. DELITOS DE Y PARA LOS SERVICIOS ESTATALES Y/O AUTONOMOS",cod:"4.02.",nom:"Negar o borrar CCTV a la policia",desc:"El dueño o empleados que obstruyen la labor policial tras haber ocurrido un delito o sospecha de este",cant:3000,sent:6},
+  {id:"64",cap:"4. DELITOS DE Y PARA LOS SERVICIOS ESTATALES Y/O AUTONOMOS",cod:"4.03.",nom:"Apropiacion indebida",desc:"El que, con animo de lucro, se apropie para si mismo o para un tercero de una cosa mueble",cant:1000,sent:0},
+  {id:"65",cap:"4. DELITOS DE Y PARA LOS SERVICIOS ESTATALES Y/O AUTONOMOS",cod:"4.04.",nom:"Posesion de objetos/materiales sin licencia pertinente",desc:"Estar en posesion de objetos o materiales sin la licencia o autorizacion pertinente",cant:2000,sent:0},
+  {id:"66",cap:"5. DE LA MONEDA Y EL TIMBRE Y LOS DELITOS CONTRA LA HACIENDA PUBLICA",cod:"5.01.",nom:"Delito leve contra la Hacienda Publica",desc:"Llevar dinero en efectivo sin declarar entre 1.000 y 5.000. No se retira pero si reincidente se procede a su incautacion",cant:500,sent:0},
+  {id:"67",cap:"5. DE LA MONEDA Y EL TIMBRE Y LOS DELITOS CONTRA LA HACIENDA PUBLICA",cod:"5.02.",nom:"Delito menor grave con la Hacienda Publica",desc:"Llevar dinero en efectivo sin declarar entre 5.001 y 10.000. No se retira pero si reincidente se procede a su incautacion",cant:2500,sent:0},
+  {id:"68",cap:"5. DE LA MONEDA Y EL TIMBRE Y LOS DELITOS CONTRA LA HACIENDA PUBLICA",cod:"5.03.",nom:"Delito grave contra la Hacienda Publica",desc:"Llevar dinero en efectivo sin declarar de 10.001 en adelante. SE RETIRA TODO EL DINERO",cant:7500,sent:9},
+  {id:"69",cap:"5. DE LA MONEDA Y EL TIMBRE Y LOS DELITOS CONTRA LA HACIENDA PUBLICA",cod:"5.04.",nom:"Trafico de divisas",desc:"Compraventa ilegal de divisas. Se considera trafico de divisas poseer mas de 10.001",cant:10000,sent:12},
+  {id:"70",cap:"5. DE LA MONEDA Y EL TIMBRE Y LOS DELITOS CONTRA LA HACIENDA PUBLICA",cod:"5.05.",nom:"Posesion de joyas",desc:"El que venda joyas o lleve consigo mas de 10 joyas en cualquier formato",cant:4000,sent:8},
+  {id:"71",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.01.",nom:"Exhibicion de un arma blanca legal en la via publica",desc:"Mostrar un arma blanca legal en la calle",cant:250,sent:0},
+  {id:"72",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.02.",nom:"Exhibicion de arma blanca ilegal en la via publica",desc:"Mostrar un arma blanca ilegal en la via publica. SE PROCEDERA CON LA INCAUTACION",cant:600,sent:0},
+  {id:"73",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.03.",nom:"Tenencia de arma blanca ilegal",desc:"Poseer un arma blanca que no este a la venta en Ammu-Nation. SE PROCEDERA CON LA INCAUTACION",cant:1000,sent:5},
+  {id:"74",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.04.",nom:"Exhibicion de un arma de fuego de calibre bajo en via publica",desc:"Mostrar un arma de fuego de bajo calibre en la via publica. SE RETIRA EN CASO DE NO CONTAR CON LICENCIA",cant:1100,sent:6},
+  {id:"75",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.05.",nom:"Exhibicion de un arma de fuego de calibre medio en la via publica",desc:"Mostrar un arma de fuego de medio calibre en la via publica. SE RETIRA EN CASO DE NO CONTAR CON LICENCIA",cant:2000,sent:6},
+  {id:"76",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.06.",nom:"Exhibicion de un arma de fuego de calibre alto en la via publica",desc:"Mostrar un arma de fuego de alto calibre en la via publica. SE RETIRA EN CASO DE NO CONTAR CON LICENCIA",cant:4000,sent:6},
+  {id:"77",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.07.",nom:"Tenencia ilegal de arma corta de fuego",desc:"Poseer un arma corta de fuego sin licencia. SE PROCEDERA CON SU INCAUTACION",cant:1500,sent:6},
+  {id:"78",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.08.",nom:"Tenencia ilegal de arma de fuego de calibre bajo",desc:"Poseer un arma de bajo calibre sin licencia. SE PROCEDERA CON SU INCAUTACION",cant:1900,sent:6},
+  {id:"79",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.09.",nom:"Tenencia ilegal de arma de fuego de calibre medio",desc:"Poseer un arma de medio calibre sin licencia. SE PROCEDERA CON SU INCAUTACION",cant:2400,sent:6},
+  {id:"80",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.10.",nom:"Tenencia ilegal de arma de fuego de calibre alto",desc:"Poseer un arma de alto calibre sin licencia. SE PROCEDERA CON SU INCAUTACION",cant:3750,sent:14},
+  {id:"81",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.11.",nom:"Trafico de armas",desc:"Trafico ilegal de armas de fuego, transporte o intento de venta ilegal a personas fuera de los legalmente habilitados",cant:9000,sent:14},
+  {id:"82",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.13.",nom:"Posesion de herramientas explosivas",desc:"Posesion de dispositivos o herramientas con explosivos. 500 por objeto",cant:250,sent:6},
+  {id:"83",cap:"6. PORTE, TENENCIA Y TRAFICO DE ARMAS U OBJETOS ILEGALES",cod:"6.14.",nom:"Posesion de municion y accesorios ilegales",desc:"Posesion de dispositivos, accesorios o municiones de armas de fuego sin licencia. 100 por cada objeto",cant:50,sent:0},
+  {id:"84",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.01.",nom:"Tenencia de Amnesia",desc:"Consumo propio: hasta 3 unidades. De 4 a 44 unidades se requisa la droga y se suma 20 x unidad",cant:80,sent:5},
+  {id:"85",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.02.",nom:"Tenencia de Amber",desc:"Consumo propio: hasta 3 unidades. De 4 a 44 unidades se requisa la droga y se suma 20 x unidad",cant:80,sent:5},
+  {id:"86",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.03.",nom:"Tenencia de Blood",desc:"Consumo propio: hasta 3 unidades. De 4 a 44 unidades se requisa la droga y se suma 20 x unidad",cant:80,sent:5},
+  {id:"87",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.04.",nom:"Tenencia de Purple",desc:"Consumo propio: hasta 3 unidades. De 4 a 44 unidades se requisa la droga y se suma 20 x unidad",cant:80,sent:5},
+  {id:"88",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.05.",nom:"Tenencia de LSD",desc:"De 1 a 44 unidades de LSD se requisan todas y se suma 30 x unidad",cant:100,sent:5},
+  {id:"89",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.06.",nom:"Tenencia de cocaina",desc:"De 1 a 44 unidades de cocaina se retiran todas y se suma 120 x unidad",cant:100,sent:5},
+  {id:"90",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.08.",nom:"Venta de Amnesia",desc:"Vender o llevar consigo de 4 a 44 unidades de amnesia. Se suma 40 por unidad requisada",cant:200,sent:10},
+  {id:"91",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.09.",nom:"Venta de Amber",desc:"Vender o llevar consigo de 4 a 44 unidades de amber. Se suma 50 por unidad requisada",cant:200,sent:10},
+  {id:"92",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.10.",nom:"Venta de Blood",desc:"Vender o llevar consigo de 4 a 44 unidades de blood. Se suma 60 por unidad requisada",cant:200,sent:10},
+  {id:"93",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.11.",nom:"Venta de Purple",desc:"Vender o llevar consigo de 4 a 44 unidades de purple. Se suma 70 por unidad requisada",cant:200,sent:10},
+  {id:"94",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.12.",nom:"Venta de LSD",desc:"Vender o llevar consigo de 1 a 44 unidades de LSD. Se suma 80 por unidad requisada",cant:350,sent:10},
+  {id:"95",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.13.",nom:"Venta de cocaina",desc:"Vender o llevar consigo de 1 a 44 unidades de cocaina. Se suma 120 x unidad requisada",cant:150,sent:10},
+  {id:"96",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.14.",nom:"Trafico de drogas",desc:"Llevar consigo mas de 45 unidades de cualquier sustancia estupefaciente",cant:3000,sent:20},
+  {id:"97",cap:"7. DELITOS CONTRA LA SALUD PUBLICA",cod:"7.15.",nom:"Consumo de sustancias estupefacientes en via publica",desc:"Consumir cualquier tipo de sustancia estupefaciente en via publica",cant:300,sent:10},
+  {id:"98",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.01.",nom:"Intento de secuestro a civil",desc:"Intentar cometer un delito de secuestro sin exito. INCLUYE: Huida de la justicia, robo de vehiculo y porte de armas",cant:750,sent:6},
+  {id:"99",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.02.",nom:"Secuestro de civil",desc:"Encerrar o detener a otro privandole de su libertad y exigir una condicion",cant:1500,sent:9},
+  {id:"100",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.03.",nom:"Retencion ilegal",desc:"El que encierra o detiene a otro privandolo de su libertad",cant:1500,sent:6},
+  {id:"101",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.04.",nom:"Delito de quebrantamiento de condena",desc:"Atenta contra la funcion jurisdiccional de hacer cumplir lo juzgado en el ambito penal",cant:7500,sent:20},
+  {id:"102",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.05.",nom:"Delito de induccion al suicidio",desc:"El que induzca al suicidio de otro sera castigado con la pena establecida en este articulo",cant:14000,sent:15},
+  {id:"103",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.06.",nom:"Intento de homicidio",desc:"Reo de homicidio en grado de tentativa: con intencion de matar cause lesiones sin conseguir la muerte",cant:2000,sent:15},
+  {id:"104",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.06.1.",nom:"Intento de homicidio a funcionario publico",desc:"Reo de homicidio en grado de tentativa sobre un funcionario publico",cant:2000,sent:25},
+  {id:"105",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.07.",nom:"Homicidio imprudente",desc:"El que matare a otro por imprudencia grave o leve. Posibilidad de perpetua tras juicio",cant:30000,sent:6},
+  {id:"106",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.07.1.",nom:"Homicidio imprudente a funcionario publico",desc:"El que matare a un funcionario publico por imprudencia. Posibilidad de perpetua tras juicio",cant:50000,sent:12},
+  {id:"107",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.09.",nom:"Asesinato",desc:"Sera castigado con pena a cadena perpetua",cant:15000,sent:30},
+  {id:"108",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.10.",nom:"Omision del socorro",desc:"Observar que otra persona esta ante situacion de peligro y no auxiliarla o no solicitar ayuda",cant:3500,sent:0},
+  {id:"109",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.11.",nom:"Coaccion",desc:"Fuerza o violencia fisica o psiquica que se ejerce sobre una persona para impedir que haga algo que la ley permite",cant:3000,sent:10},
+  {id:"110",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.12.",nom:"Negligencia medica con resultado de lesiones",desc:"Sanitario que no sea cuidadoso con su procedimiento de actuacion y cause lesiones al paciente",cant:1500,sent:10},
+  {id:"111",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.13.",nom:"Negligencia medica con resultado de muerte",desc:"Sanitario que no sea cuidadoso con su procedimiento de actuacion y cause la muerte del paciente",cant:10000,sent:20},
+  {id:"112",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.14.",nom:"Tomar, difamar o difundir grabaciones de un ciudadano",desc:"Grabar o tomar foto/video de un ciudadano sin su consentimiento",cant:200,sent:5},
+  {id:"113",cap:"8. DELITOS CONTRA LA INTEGRIDAD FISICA CIUDADANA",cod:"8.15.",nom:"Vandalismo hacia una propiedad privada",desc:"Causar daños de cualquier tipo a propiedad privada o personal",cant:500,sent:5},
+  {id:"114",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.01.",nom:"Delito de falsificacion de documento",desc:"El particular que falsee un documento publico, oficial o mercantil con la intencion de aparentar ser real",cant:20000,sent:30},
+  {id:"115",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.02.",nom:"Posesion de documentacion no renovada/valida",desc:"Poseer licencias o documentacion no renovadas o no validas habiendo sido previamente avisado",cant:300,sent:0},
+  {id:"116",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.03.",nom:"Negacion del agente a enseñar o decir el numero de placa",desc:"Sancionado el agente que se niegue a enseñar su numero de placa. EL AGENTE ABONARA AL CIUDADANO UNA INDEMNIZACION DE 8.000",cant:9000,sent:20},
+  {id:"117",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.04.",nom:"Usurpacion de funciones publicas",desc:"Ejercicio de actos propios de una autoridad o funcionario atribuyendose caracter oficial sin las condiciones precisas",cant:2600,sent:15},
+  {id:"118",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.05.",nom:"Intrusismo",desc:"Ejercicio de una actividad profesional sin titulo o autorizacion necesarios para ello",cant:1000,sent:10},
+  {id:"119",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.06.",nom:"Denuncia falsa/escasa o irrisoria",desc:"Ciudadano que denuncie con redaccion escasa y por motivo sin fundamento. Debera indemnizar al agente con 5.000 ademas de la pena",cant:1200,sent:0},
+  {id:"120",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.07.",nom:"Negacion del civil a enseñar su documento de identidad",desc:"Civil que se niegue a enseñar su documento de identidad llevandolo encima tras una intervencion",cant:9000,sent:20},
+  {id:"121",cap:"9. DELITOS DE DOCUMENTOS, IDENTIFICACIONES Y LICENCIA",cod:"9.08.",nom:"Ir indocumentado por la via",desc:"Civil que no porte su carnet identificativo en el momento que se le requiera",cant:100,sent:0},
+  {id:"122",cap:"10. DELITOS DE LA ADMINISTRACION PUBLICA",cod:"10.01.",nom:"Prevaricacion de funcionario publico",desc:"Funcionario publico que dicte una resolucion a sabiendas de su ilegalidad en el ejercicio de su competencia",cant:3000,sent:0},
+  {id:"123",cap:"10. DELITOS DE LA ADMINISTRACION PUBLICA",cod:"10.02.",nom:"Ingesta de drogas o alcohol de servicio",desc:"Consumir sustancias estupefacientes o alcohol durante el servicio",cant:11000,sent:20},
+  {id:"124",cap:"10. DELITOS DE LA ADMINISTRACION PUBLICA",cod:"10.03.",nom:"Omision del deber de perseguir delitos",desc:"Autoridad o funcionario que intencionadamente deje de promover la persecucion de los delitos de que tenga noticia",cant:6000,sent:0},
+  {id:"125",cap:"10. DELITOS DE LA ADMINISTRACION PUBLICA",cod:"10.04.",nom:"Omision de socorro por un funcionario publico",desc:"Autoridad o funcionario publico que, requerido a prestar auxilio por razon de su cargo, se abstuviera de prestarlo",cant:5000,sent:0},
+  {id:"126",cap:"10. DELITOS DE LA ADMINISTRACION PUBLICA",cod:"10.05.",nom:"Revelacion de secretos",desc:"Autoridad o funcionario publico que revelare secretos o informaciones de los que tenga conocimiento. ASUNTOS INTERNOS DECIDIRA SOBRE EXPULSION",cant:40000,sent:40},
+  {id:"127",cap:"10. DELITOS DE LA ADMINISTRACION PUBLICA",cod:"10.06.",nom:"Allanamiento de domicilio",desc:"El que entra contra la voluntad del titular en el domicilio, despacho, oficina o establecimiento mercantil fuera de las horas de apertura",cant:3000,sent:0},
+  {id:"128",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.01.",nom:"Obstruccion a la justicia",desc:"Ciudadano que omita presentarse en comisaria, colaborar con la policia o dificultar el trabajo de la misma",cant:1500,sent:0},
+  {id:"129",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.02.",nom:"Desacato a la autoridad",desc:"Hacer caso omiso a una orden directa de un agente de la autoridad",cant:1000,sent:0},
+  {id:"130",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.03.",nom:"Huida de la justicia",desc:"El sujeto evade o huye de la justicia. Incluye: Robo de vehiculo y todos los delitos contra la seguridad vial",cant:1100,sent:0},
+  {id:"131",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.04.",nom:"Complice de huida de la justicia",desc:"El que obstruye de forma interesada el operativo. Incluye: porte de armas, robo de vehiculo y todos los delitos contra la seguridad vial",cant:750,sent:0},
+  {id:"132",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.05.",nom:"Agredir o amenazar a un funcionario publico",desc:"El que realice una accion violenta a un funcionario publico con la intencion de causar daño",cant:1500,sent:10},
+  {id:"133",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.06.",nom:"Faltas de respeto a un funcionario publico",desc:"Agredir verbalmente o menospreciar a un agente de la ley. Si reincide continuamente se aplica la condena",cant:1500,sent:0},
+  {id:"134",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.07.",nom:"Robo con fuerza o intimidacion a un funcionario publico",desc:"Amenazar a un funcionario publico para que entregue sus pertenencias",cant:2000,sent:12},
+  {id:"135",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.08.",nom:"Violar un perimetro o cordon policial",desc:"Cruzar o traspasar sin permiso de las autoridades un perimetro policial claramente señalizado",cant:1500,sent:0},
+  {id:"136",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.09.",nom:"Intento de soborno a un funcionario publico",desc:"Tratar de incentivar a la corrupcion por medio de bienes o una suma monetaria",cant:1000,sent:4},
+  {id:"137",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.10.",nom:"Soborno a un funcionario publico",desc:"Haber corrompido por medio de bienes o una suma monetaria a un funcionario publico",cant:2000,sent:8},
+  {id:"138",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.11.",nom:"Tomar, difamar o difundir grabaciones de un funcionario publico",desc:"Grabar o tomar una foto/video de un funcionario publico sin su consentimiento",cant:1500,sent:8},
+  {id:"139",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.12.",nom:"Intento de secuestro a funcionario publico",desc:"No realizar con exito la accion de retener u ocultar a un funcionario publico. Incluye: Huida, robo de vehiculo y porte de armas",cant:2500,sent:12},
+  {id:"140",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.13.",nom:"Secuestro a funcionario publico",desc:"Retener a un funcionario publico contra su voluntad. Incluye: Huida, robo de vehiculo y porte de armas",cant:5000,sent:20},
+  {id:"141",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.14.",nom:"Entrar en zonas de acceso a funcionarios en dependencias policiales",desc:"Acceder sin autorizacion a zonas privadas de cualquier comisaria policial",cant:2000,sent:0},
+  {id:"142",cap:"11. DELITOS CONTRA LA ADMINISTRACION DE JUSTICIA",cod:"11.15.",nom:"Entrada no autorizada a instalaciones militares",desc:"Invasion del terreno de una instalacion militar a pie o en cualquier tipo de vehiculo",cant:20000,sent:20},
+  {id:"143",cap:"12. DE LOS DELITOS CONTRA LOS RECURSOS NATURALES Y DEL MEDIO AMBIENTE",cod:"12.01.",nom:"Asesinato o caza de especies protegidas",desc:"Atentar contra la vida de una especie protegida. Incautacion del material. SE COBRARA POR UNIDADES CAPTURADAS",cant:300,sent:0},
+  {id:"144",cap:"12. DE LOS DELITOS CONTRA LOS RECURSOS NATURALES Y DEL MEDIO AMBIENTE",cod:"12.02.",nom:"Contaminacion del medioambiente",desc:"Civil que arroje residuos solidos o peligrosos al dominio publico no habilitado",cant:800,sent:12},
+  {id:"145",cap:"12. DE LOS DELITOS CONTRA LOS RECURSOS NATURALES Y DEL MEDIO AMBIENTE",cod:"12.03.",nom:"Provocar incendio",desc:"El que provocare un incendio que comporte peligro para la vida o integridad de las personas o cause daños en bienes",cant:800,sent:12},
+  {id:"146",cap:"13. DELITO CONTRA LOS ANIMALES",cod:"13.01.",nom:"Maltrato animal",desc:"Maltratar injustificadamente a un animal domestico o amansado causandole lesiones que menoscaben gravemente su salud",cant:750,sent:5},
+  {id:"147",cap:"13. DELITO CONTRA LOS ANIMALES",cod:"13.02.",nom:"Maltrato animal con muerte del mismo",desc:"Cualquier accion u omision que perjudique al animal directa o indirectamente provocando su muerte",cant:10000,sent:10},
+  {id:"148",cap:"13. DELITO CONTRA LOS ANIMALES",cod:"13.03.",nom:"Circular sin la documentacion del animal",desc:"Dueño del animal que no porte la documentacion que justifique la custodia de este",cant:300,sent:0},
+  {id:"149",cap:"13. DELITO CONTRA LOS ANIMALES",cod:"13.04.",nom:"Abandono Animal",desc:"Dejar al animal en un lugar poco seguro donde pueda sufrir daños o sin controlarlo, provocando daños a civiles o mobiliario",cant:500,sent:5},
+  {id:"150",cap:"13. DELITO CONTRA LOS ANIMALES",cod:"13.05.",nom:"Posesion de Perros Potencialmente Peligrosos",desc:"El dueño de un perro catalogado como potencialmente peligroso debera portar siempre la documentacion y el documento psicotecnico",cant:1000,sent:0},
+  {id:"151",cap:"14. DE LA EXTORSION",cod:"14.01.",nom:"Extorsion",desc:"El que, con animo de lucro, obligare a otro con violencia o intimidacion a realizar u omitir un acto en perjuicio de su patrimonio",cant:2500,sent:5},
+  {id:"152",cap:"15. DELITO DE LAS DEFRAUDACIONES",cod:"15.01.",nom:"Delito de Estafa",desc:"Los que utilizaren engaño bastante para producir error en otro, induciendolo a realizar un acto de disposicion en perjuicio propio o ajeno",cant:2000,sent:5},
+  {id:"153",cap:"15. DELITO DE LAS DEFRAUDACIONES",cod:"15.02.",nom:"Delito de tipo agravado de Estafa",desc:"Agravante cuando: se abusa de firma de otro, documentos publicos, o cuando el valor de la defraudacion sea superior a 50.000",cant:4000,sent:10},
+  {id:"154",cap:"15. DELITO DE LAS DEFRAUDACIONES",cod:"15.03.",nom:"Delito de Apropiacion Indebida",desc:"Apropiarse para si o para un tercero de dinero, efectos o valores recibidos en deposito o custodia",cant:1000,sent:10},
+  {id:"155",cap:"16. DELITO DE LA RECEPCION Y BLANQUEO DE CAPITALES",cod:"16.01.",nom:"Delito de Receptacion",desc:"Con animo de lucro y conocimiento de un delito contra el patrimonio, ayudar a los responsables a aprovecharse de sus efectos",cant:1500,sent:10},
+  {id:"156",cap:"16. DELITO DE LA RECEPCION Y BLANQUEO DE CAPITALES",cod:"16.02.",nom:"Delito de Blanqueo de Capitales",desc:"Adquirir, utilizar o convertir bienes, o realizar cualquier acto para ocultar su origen ilicito o ayudar al infractor",cant:12000,sent:10},
+  {id:"157",cap:"17. DELITO DE DAÑOS",cod:"17.01.",nom:"Delito de Daños",desc:"El sujeto activo cause destruccion o menoscabo en una propiedad ajena, mueble o inmueble",cant:2500,sent:5},
+  {id:"158",cap:"17. DELITO DE DAÑOS",cod:"17.02.",nom:"Delito de Daños de Tipo Agravado",desc:"Daños cometidos mediante incendio, explosiones, o cualquier otro medio de similar potencia destructiva",cant:2500,sent:15},
+  {id:"159",cap:"17. DELITO DE DAÑOS",cod:"17.03.",nom:"Delito de Daños por Imprudencia",desc:"Daños causados por imprudencia grave. Multa de 8 meses y responsabilidad civil. Solo perseguible previa denuncia",cant:1500,sent:8},
+  {id:"160",cap:"18. DELITO DEL ENCUBRIMIENTO",cod:"18.01.",nom:"Delito de Encubrimiento",desc:"El que, con conocimiento de la comision de un delito y sin haber intervenido, interviniere con posterioridad a su ejecucion",cant:2000,sent:12},
+  {id:"161",cap:"19. DELITO DE LA ACUSACION Y DENUNCIAS FALSAS Y DEL FALSO TESTIMONIO",cod:"19.01.",nom:"Delito de Interposicion de Falsa Denuncia",desc:"Los que, con conocimiento de su falsedad, imputaren a alguna persona hechos que constituirian infraccion penal",cant:3000,sent:10},
+  {id:"162",cap:"19. DELITO DE LA ACUSACION Y DENUNCIAS FALSAS Y DEL FALSO TESTIMONIO",cod:"19.02.",nom:"Delito de Falso Testimonio",desc:"El testigo que faltare a la verdad en su testimonio en causa judicial",cant:5000,sent:10},
+  {id:"163",cap:"19. DELITO DE LA ACUSACION Y DENUNCIAS FALSAS Y DEL FALSO TESTIMONIO",cod:"19.03.",nom:"Delito de Falsos Testimonios en Causas Civiles y Penales",desc:"El que presentare a sabiendas testigos falsos o peritos sera castigado con las mismas penas",cant:5000,sent:20},
+  {id:"164",cap:"19. DELITO DE LA ACUSACION Y DENUNCIAS FALSAS Y DEL FALSO TESTIMONIO",cod:"19.19.",nom:"Complice de intento de secuestro a un funcionario publico",desc:"Complice cuando se ve involucrado en un secuestro contra un funcionario publico",cant:3250,sent:15},
+  {id:"165",cap:"20. NEGOCIOS",cod:"20.01.",nom:"Negacion de servicios",desc:"Negarse a ofrecer servicios de seguridad a los establecimientos",cant:4000,sent:0},
+  {id:"166",cap:"20. NEGOCIOS",cod:"20.02.",nom:"Negacion de contratar",desc:"Negarse a contratar servicios de seguridad, incumpliendo con la ley 09/2025 de la obligacion de contratar seguridad",cant:4000,sent:0}
+];
+
+// ─── FIREBASE: subir datos por primera vez si la coleccion esta vacia ─────────
+async function seedIfEmpty() {
+  const snap = await getDocs(colRef);
+  if (snap.empty) {
+    showLoading("Inicializando base de datos...");
+    const batch = writeBatch(db);
+    DEFAULT_ARTICLES.forEach(a => {
+      batch.set(doc(db, "articles", String(a.id)), a);
+    });
+    await batch.commit();
+  }
+}
+
+// ─── FIREBASE: escuchar cambios en tiempo real ────────────────────────────────
+function startListener() {
+  onSnapshot(colRef, (snap) => {
+    articles = snap.docs.map(d => d.data());
+    articles.sort((a,b) => {
+      const na = parseFloat(String(a.id)) || 9999;
+      const nb = parseFloat(String(b.id)) || 9999;
+      return na - nb;
+    });
+    dbLoaded = true;
+    hideLoading();
+    renderAll();
+  }, (err) => {
+    console.error(err);
+    hideLoading();
+    toast("Error al conectar con Firebase", true);
+  });
+}
+
+// ─── LOADING OVERLAY ──────────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('loadingOverlay').style.display = 'flex';
+  document.getElementById('loadingMsg').textContent = msg || 'Cargando datos...';
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function getChapters() {
+  const seen = new Set(), res = [];
+  articles.forEach(a => { if (!seen.has(a.cap)) { seen.add(a.cap); res.push(a.cap); } });
+  return res;
+}
+function sentClass(s) { return s===0?'s0':s<=6?'s1':s<=12?'s2':s<=20?'s3':'s4'; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function hl(t,q) {
+  if (!q) return esc(t);
+  return esc(t).replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>');
+}
+
+function renderAll() {
+  if (!dbLoaded) return;
+  const q = (document.getElementById('searchInput').value||''). trim().toLowerCase();
+  const cont = document.getElementById('chaptersContainer');
+  cont.innerHTML = '';
+  let totalA=0, withS=0, visC=0;
+
+  getChapters().forEach(cap => {
+    const items = articles.filter(a => a.cap===cap && (!q || (a.cod+' '+a.nom).toLowerCase().includes(q) || a.desc.toLowerCase().includes(q) || String(a.cant).includes(q)));
+    if (!items.length) return;
+    visC++; totalA+=items.length; items.forEach(i=>{ if(i.sent>0) withS++; });
+
+    const num = cap.match(/^(\d+)/)?.[1]||'?';
+    const title = cap.replace(/^\d+\.\s*/,'');
+    const isOpen = openChaps.has(num)||!!q;
+    const capEsc = cap.replace(/'/g,"\\\'");
+
+    const div = document.createElement('div');
+    div.className = 'chapter'+(isOpen?' open':'');
+    div.id = 'ch-'+num;
+    div.innerHTML = `
+      <div class="ch-header" onclick="toggleCh('${num}',event)">
+        <div>
+          <div class="ch-num">CAPÍTULO ${String(num).padStart(2,'0')}</div>
+          <div class="ch-title">${hl(title,q)}</div>
+        </div>
+        <div class="ch-right">
+          <span class="ch-count">${items.length} ARTÍCULOS</span>
+          <button class="btn-add-art" onclick="event.stopPropagation();openAdd('${capEsc}')">＋ AÑADIR ARTÍCULO</button>
+          <span class="chevron">▶</span>
+        </div>
+      </div>
+      <div class="ch-body">
+        <table>
+          <thead><tr>
+            <th style="width:95px">CÓDIGO</th>
+            <th>ARTÍCULO / DESCRIPCIÓN</th>
+            <th class="th-amount" style="width:115px">MULTA</th>
+            <th class="th-sent" style="width:115px">CONDENA</th>
+            <th class="th-actions">ACCIONES</th>
+          </tr></thead>
+          <tbody>${items.map(it=>`
+            <tr>
+              <td><span class="art-code">${hl(it.cod,q)}</span></td>
+              <td><div class="art-name">${hl(it.nom,q)}</div><div class="art-desc">${hl(it.desc,q)}</div></td>
+              <td class="td-amount"><span class="amount-badge">${Number(it.cant).toLocaleString('es-ES')}$</span></td>
+              <td class="td-sent"><span class="s-badge ${sentClass(Number(it.sent))}">${Number(it.sent)===0?'—':Number(it.sent)+' meses'}</span></td>
+              <td class="td-actions">
+                <div class="action-btns">
+                  <button class="btn-edit" onclick="openEdit('${it.id}')">✏ EDITAR</button>
+                  <button class="btn-del" onclick="openDel('${it.id}')">✕ BORRAR</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    cont.appendChild(div);
+  });
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="lbl">Capítulos</div><div class="val">${visC}</div></div>
+    <div class="stat-card"><div class="lbl">Artículos</div><div class="val">${totalA}</div></div>
+    <div class="stat-card"><div class="lbl">Con Condena</div><div class="val">${withS}</div></div>
+    <div class="stat-card"><div class="lbl">Solo Multa</div><div class="val">${totalA-withS}</div></div>`;
+}
+
+window.toggleCh = function(num, e) {
+  if (e.target.tagName==='BUTTON') return;
+  const d = document.getElementById('ch-'+num);
+  if (!d) return;
+  d.classList.toggle('open') ? openChaps.add(num) : openChaps.delete(num);
+};
+
+// ─── ADMIN ────────────────────────────────────────────────────────────────────
+window.toggleAdmin = function() {
+  if (isAdmin) {
+    isAdmin=false; document.body.classList.remove('admin');
+    document.getElementById('adminBtn').textContent='🔒 Admin';
+    document.getElementById('adminBtn').classList.remove('active');
+    toast('Sesión cerrada');
+  } else {
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwErr').style.display='none';
+    openModal('pwOverlay');
+    setTimeout(()=>document.getElementById('pwInput').focus(),120);
+  }
+};
+
+window.checkPw = async function() {
+  const input = document.getElementById('pwInput').value;
+  const hashed = await hashInput(input);
+  if (hashed === PASS_HASH) {
+    isAdmin=true; document.body.classList.add('admin');
+    document.getElementById('adminBtn').textContent='🔓 Admin';
+    document.getElementById('adminBtn').classList.add('active');
+    document.getElementById('pwInput').value='';
+    closeModal('pwOverlay');
+    toast('✓ Modo administrador activado');
+    renderAll();
+  } else {
+    document.getElementById('pwErr').style.display='block';
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwInput').focus();
+    setTimeout(()=>document.getElementById('pwErr').style.display='none',3000);
+  }
+};
+
+// ─── CAP SELECT ───────────────────────────────────────────────────────────────
+function populateCaps(sel) {
+  const s = document.getElementById('editCap');
+  s.innerHTML='';
+  getChapters().forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c; o.textContent=c; if(c===sel) o.selected=true;
+    s.appendChild(o);
+  });
+  const n=document.createElement('option'); n.value='__new__'; n.textContent='[ + Nuevo capítulo... ]';
+  s.appendChild(n);
+}
+window.capChanged = function() {
+  document.getElementById('newCapFg').style.display = document.getElementById('editCap').value==='__new__'?'block':'none';
+};
+
+// ─── EDIT / ADD ───────────────────────────────────────────────────────────────
+window.openEdit = function(id) {
+  const a=articles.find(x=>String(x.id)===String(id)); if(!a) return;
+  document.getElementById('editTitle').textContent='✏ Editar Artículo';
+  document.getElementById('editSub').textContent='Modifica los campos del artículo seleccionado.';
+  document.getElementById('editSaveBtn').textContent='Guardar Cambios';
+  document.getElementById('editId').value=String(id);
+  document.getElementById('editMode').value='edit';
+  populateCaps(a.cap);
+  document.getElementById('newCapFg').style.display='none';
+  document.getElementById('editCod').value=a.cod;
+  document.getElementById('editNom').value=a.nom;
+  document.getElementById('editDesc').value=a.desc;
+  document.getElementById('editCant').value=a.cant;
+  document.getElementById('editSent').value=a.sent;
+  openModal('editOverlay');
+};
+
+window.openAdd = function(cap) {
+  document.getElementById('editTitle').textContent='＋ Añadir Artículo';
+  document.getElementById('editSub').textContent='Rellena los campos para crear un nuevo artículo.';
+  document.getElementById('editSaveBtn').textContent='Crear Artículo';
+  document.getElementById('editId').value='';
+  document.getElementById('editMode').value='add';
+  populateCaps(cap);
+  document.getElementById('newCapFg').style.display='none';
+  document.getElementById('editCod').value='';
+  document.getElementById('editNom').value='';
+  document.getElementById('editDesc').value='';
+  document.getElementById('editCant').value='';
+  document.getElementById('editSent').value='0';
+  openModal('editOverlay');
+};
+
+window.saveArticle = async function() {
+  let cap = document.getElementById('editCap').value;
+  if (cap==='__new__') {
+    cap = document.getElementById('newCapName').value.trim();
+    if (!cap) { alert('Introduce el nombre del nuevo capítulo.'); return; }
+  }
+  const cod=document.getElementById('editCod').value.trim();
+  const nom=document.getElementById('editNom').value.trim();
+  const desc=document.getElementById('editDesc').value.trim();
+  const cant=parseInt(document.getElementById('editCant').value)||0;
+  const sent=parseInt(document.getElementById('editSent').value)||0;
+  if (!cod||!nom||!desc) { alert('Por favor rellena código, nombre y descripción.'); return; }
+
+  const mode=document.getElementById('editMode').value;
+  try {
+    if (mode==='edit') {
+      const id=document.getElementById('editId').value;
+      await setDoc(doc(db,"articles",String(id)), {id:String(id),cap,cod,nom,desc,cant,sent});
+      toast('✓ Artículo actualizado');
+    } else {
+      const newId = String(Date.now());
+      await setDoc(doc(db,"articles",newId), {id:newId,cap,cod,nom,desc,cant,sent});
+      toast('✓ Artículo añadido');
+    }
+    closeModal('editOverlay');
+    const num=cap.match(/^(\d+)/)?.[1];
+    if (num) openChaps.add(num);
+  } catch(e) {
+    console.error(e);
+    toast('Error al guardar en Firebase', true);
+  }
+};
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+window.openDel = function(id) {
+  const a=articles.find(x=>String(x.id)===String(id)); if(!a) return;
+  pendingDelId=String(id);
+  document.getElementById('delDesc').textContent=`¿Seguro que deseas eliminar "${a.cod} ${a.nom}"? Esta acción no se puede deshacer.`;
+  openModal('delOverlay');
+};
+
+window.confirmDelete = async function() {
+  if (!pendingDelId) return;
+  try {
+    await deleteDoc(doc(db,"articles",pendingDelId));
+    toast('✓ Artículo eliminado');
+  } catch(e) {
+    toast('Error al eliminar', true);
+  }
+  pendingDelId=null;
+  closeModal('delOverlay');
+};
+
+// ─── MODALS ───────────────────────────────────────────────────────────────────
+window.openModal = function(id){document.getElementById(id).classList.add('show');};
+window.closeModal = function(id){document.getElementById(id).classList.remove('show');};
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)closeModal(this.id);}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.show').forEach(o=>closeModal(o.id));});
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function toast(msg, isErr=false) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show'+(isErr?' err':'');
+  setTimeout(()=>t.className='',3000);
+}
+
+// ─── SEARCH ───────────────────────────────────────────────────────────────────
+window.renderAll = renderAll;
+document.getElementById('searchInput').addEventListener('input', renderAll);
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+showLoading("Conectando con Firebase...");
+await seedIfEmpty();
+startListener();
+</script>
+</body>
+</html>
