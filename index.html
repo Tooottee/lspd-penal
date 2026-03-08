@@ -11,10 +11,19 @@
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
   // Deshabilitar F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S
   document.addEventListener('keydown', function(e){
-    if(e.key==='F12') { e.preventDefault(); return false; }
+    if(e.key==='F12') { e.preventDefault(); showBlocked(); return false; }
     if(e.ctrlKey && e.shiftKey && (e.key==='I'||e.key==='i'||e.key==='J'||e.key==='j'||e.key==='C'||e.key==='c')) { e.preventDefault(); return false; }
     if(e.ctrlKey && (e.key==='U'||e.key==='u'||e.key==='S'||e.key==='s')) { e.preventDefault(); return false; }
+    if(e.ctrlKey && (e.key==='C'||e.key==='c'||e.key==='X'||e.key==='x'||e.key==='V'||e.key==='v'||e.key==='A'||e.key==='a'||e.key==='P'||e.key==='p')) { e.preventDefault(); return false; }
   });
+  function showBlocked(){
+    document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0e1a;color:#c0392b;font-family:monospace;font-size:1.2rem;letter-spacing:3px;text-transform:uppercase;">⛔ Acceso no autorizado</div>';
+  }
+  // Deshabilitar selección de texto
+  document.addEventListener('selectstart', function(e){ e.preventDefault(); });
+  document.addEventListener('copy', function(e){ e.preventDefault(); });
+  document.addEventListener('cut', function(e){ e.preventDefault(); });
+  document.addEventListener('paste', function(e){ e.preventDefault(); });
   // Detectar DevTools abierto por tamaño de ventana
   var _dt = false;
   setInterval(function(){
@@ -22,7 +31,7 @@
     var h = window.outerHeight - window.innerHeight > 160;
     if((w||h) && !_dt){
       _dt = true;
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0e1a;color:#c0392b;font-family:monospace;font-size:1.2rem;letter-spacing:3px;text-transform:uppercase;">⛔ Acceso no autorizado</div>';
+      showBlocked();
     }
   }, 500);
   // Detectar DevTools por tiempo de ejecución
@@ -30,7 +39,7 @@
     var s = +new Date();
     (function(){}['constructor']('debugger')());
     if(+new Date()-s > 100){ 
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0e1a;color:#c0392b;font-family:monospace;font-size:1.2rem;letter-spacing:3px;text-transform:uppercase;">⛔ Acceso no autorizado</div>';
+      showBlocked();
     }
     setTimeout(_check, 1000);
   };
@@ -54,7 +63,8 @@
     --white: #e8edf5;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { background:var(--navy); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; }
+  body { background:var(--navy); color:var(--text); font-family:'Exo 2',sans-serif; min-height:100vh; user-select:none; -webkit-user-select:none; -moz-user-select:none; }
+  input, textarea { user-select:text; -webkit-user-select:text; -moz-user-select:text; }
 
   /* scanlines - NEVER block pointer events */
   body::before {
