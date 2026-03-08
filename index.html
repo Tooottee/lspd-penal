@@ -3,7 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LSPD — Código Penal de LSPD LSNetwork</title>
+<title>LSPD — Código Penal de LSP LSNetwork</title>
+<script>
+// Anti-inspect
+(function(){
+  // Deshabilitar clic derecho
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+  // Deshabilitar F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S
+  document.addEventListener('keydown', function(e){
+    if(e.key==='F12') { e.preventDefault(); return false; }
+    if(e.ctrlKey && e.shiftKey && (e.key==='I'||e.key==='i'||e.key==='J'||e.key==='j'||e.key==='C'||e.key==='c')) { e.preventDefault(); return false; }
+    if(e.ctrlKey && (e.key==='U'||e.key==='u'||e.key==='S'||e.key==='s')) { e.preventDefault(); return false; }
+  });
+  // Detectar DevTools abierto por tamaño de ventana
+  var _dt = false;
+  setInterval(function(){
+    var w = window.outerWidth - window.innerWidth > 160;
+    var h = window.outerHeight - window.innerHeight > 160;
+    if((w||h) && !_dt){
+      _dt = true;
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0e1a;color:#c0392b;font-family:monospace;font-size:1.2rem;letter-spacing:3px;text-transform:uppercase;">⛔ Acceso no autorizado</div>';
+    }
+  }, 500);
+  // Detectar DevTools por tiempo de ejecución
+  var _check = function(){
+    var s = +new Date();
+    (function(){}['constructor']('debugger')());
+    if(+new Date()-s > 100){ 
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0e1a;color:#c0392b;font-family:monospace;font-size:1.2rem;letter-spacing:3px;text-transform:uppercase;">⛔ Acceso no autorizado</div>';
+    }
+    setTimeout(_check, 1000);
+  };
+  setTimeout(_check, 500);
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -256,7 +289,7 @@
         <text x="30" y="34" text-anchor="middle" fill="#c8a84b" font-size="11" font-weight="bold" font-family="Rajdhani,sans-serif">LSPD</text>
       </svg>
       <div class="header-title">
-        <h1>Código Penal · LSPD LSNetwork</h1>
+        <h1>Código Penal · LSP LSNetwork</h1>
         <p>LOS SANTOS POLICE DEPARTMENT — SISTEMA DE GESTIÓN LEGAL v2.2</p>
       </div>
     </div>
@@ -267,12 +300,12 @@
   </div>
   <div class="ticker">
     <div class="ticker-inner">
-      <span>CÓDIGO PENAL DE LSPD LSNetwork</span><span>★</span>
+      <span>CÓDIGO PENAL DE LSP LSNetwork</span><span>★</span>
       <span>DEPARTAMENTO DE POLICÍA DE LOS SANTOS</span><span>★</span>
       <span>USO OFICIAL — CONFIDENCIAL</span><span>★</span>
       <span>PROHIBIDA LA DISTRIBUCIÓN NO AUTORIZADA</span><span>★</span>
       <span>ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</span><span>★</span>
-      <span>CÓDIGO PENAL DE LSPD LSNetwork</span><span>★</span>
+      <span>CÓDIGO PENAL DE LSP LSNetwork</span><span>★</span>
     </div>
   </div>
 </header>
@@ -290,7 +323,7 @@
   <div id="chaptersContainer"></div>
 </main>
 
-<footer>LOS SANTOS POLICE DEPARTMENT · CÓDIGO PENAL DE LSPD LSNetwork · ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</footer>
+<footer>LOS SANTOS POLICE DEPARTMENT · CÓDIGO PENAL DE LSP LSNetwork · ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</footer>
 
 <script type="module">
 // ─── FIREBASE ────────────────────────────────────────────────────────────────
@@ -298,19 +331,19 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAFdnu3l239Gri8QIbV7QPlvN9YmJF7xjU",
-  authDomain: "lspd-codigo-penal.firebaseapp.com",
-  projectId: "lspd-codigo-penal",
-  storageBucket: "lspd-codigo-penal.firebasestorage.app",
-  messagingSenderId: "140965010690",
-  appId: "1:140965010690:web:d93bf36a6b05e1569a761b"
+  apiKey: "\x41\x49\x7a\x61\x53\x79\x41\x46\x64\x6e\x75\x33\x6c\x32\x33\x39\x47\x72\x69\x38\x51\x49\x62\x56\x37\x51\x50\x6c\x76\x4e\x39\x59\x6d\x4a\x46\x37\x78\x6a\x55",
+  authDomain: "\x6c\x73\x70\x64\x2d\x63\x6f\x64\x69\x67\x6f\x2d\x70\x65\x6e\x61\x6c\x2e\x66\x69\x72\x65\x62\x61\x73\x65\x61\x70\x70\x2e\x63\x6f\x6d",
+  projectId: "\x6c\x73\x70\x64\x2d\x63\x6f\x64\x69\x67\x6f\x2d\x70\x65\x6e\x61\x6c",
+  storageBucket: "\x6c\x73\x70\x64\x2d\x63\x6f\x64\x69\x67\x6f\x2d\x70\x65\x6e\x61\x6c\x2e\x66\x69\x72\x65\x62\x61\x73\x65\x73\x74\x6f\x72\x61\x67\x65\x2e\x61\x70\x70",
+  messagingSenderId: "\x31\x34\x30\x39\x36\x35\x30\x31\x30\x36\x39\x30",
+  appId: "\x31\x3a\x31\x34\x30\x39\x36\x35\x30\x31\x30\x36\x39\x30\x3a\x77\x65\x62\x3a\x64\x39\x33\x62\x66\x33\x36\x61\x36\x62\x30\x35\x65\x31\x35\x36\x39\x61\x37\x36\x31\x62",
 };
 const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
-const colRef = collection(db, "articles");
+const colRef = collection(db, "\x61\x72\x74\x69\x63\x6c\x65\x73");
 
 // ─── PASSWORD ────────────────────────────────────────────────────────────────
-const PASS_HASH = "2e3072c07b5654069e10282cc13fd5c106411920c4289792d52f991914358b50";
+const PASS_HASH = "\x32\x65\x33\x30\x37\x32\x63\x30\x37\x62\x35\x36\x35\x34\x30\x36\x39\x65\x31\x30\x32\x38\x32\x63\x63\x31\x33\x66\x64\x35\x63\x31\x30\x36\x34\x31\x31\x39\x32\x30\x63\x34\x32\x38\x39\x37\x39\x32\x64\x35\x32\x66\x39\x39\x31\x39\x31\x34\x33\x35\x38\x62\x35\x30";
 async function hashInput(str) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
@@ -381,7 +414,7 @@ const DEFAULT_ARTICLES = [
   {id:"55",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.11.2.",nom:"Complice de robo LifeInvader",desc:"Ser complice del robo obstruyendo el operativo",cant:4000,sent:10},
   {id:"56",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.13.",nom:"Robo a sucursal bancaria",desc:"Apoderarse de los bienes empleando violencia o intimidacion al cometer el delito o para proteger la huida",cant:6500,sent:10},
   {id:"57",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.13.2.",nom:"Complice robo a sucursal bancaria",desc:"Obstruir intencionadamente el operativo para cubrir la huida",cant:4250,sent:10},
-  {id:"58",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.",nom:"Robo a Banco Federal",desc:"Robar la caja fuerte de la reserva del condado de LSPD LSNetwork o Blaine",cant:15000,sent:25},
+  {id:"58",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.",nom:"Robo a Banco Federal",desc:"Robar la caja fuerte de la reserva del condado de LSP LSNetwork o Blaine",cant:15000,sent:25},
   {id:"59",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.2.",nom:"Complice de robo federal",desc:"El que obstruya intencionadamente el operativo del robo a beneficio de los atracadores",cant:12250,sent:15},
   {id:"60",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.15.",nom:"Robo a los laboratorios Humane",desc:"Asaltar con animo de lucro los laboratorios empleando violencia o intimidacion",cant:10000,sent:15},
   {id:"61",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.15.2.",nom:"Complice robo a laboratorio Humane",desc:"Realizar actos que pongan en peligro el operativo del robo de manera consciente",cant:7500,sent:15},
@@ -721,11 +754,11 @@ window.saveArticle = async function() {
   try {
     if (mode==='edit') {
       const id=document.getElementById('editId').value;
-      await setDoc(doc(db,"articles",String(id)), {id:String(id),cap,cod,nom,desc,cant,sent});
+      await setDoc(doc(db,"\x61\x72\x74\x69\x63\x6c\x65\x73",String(id)), {id:String(id),cap,cod,nom,desc,cant,sent});
       toast('✓ Artículo actualizado');
     } else {
       const newId = String(Date.now());
-      await setDoc(doc(db,"articles",newId), {id:newId,cap,cod,nom,desc,cant,sent});
+      await setDoc(doc(db,"\x61\x72\x74\x69\x63\x6c\x65\x73",newId), {id:newId,cap,cod,nom,desc,cant,sent});
       toast('✓ Artículo añadido');
     }
     closeModal('editOverlay');
@@ -748,7 +781,7 @@ window.openDel = function(id) {
 window.confirmDelete = async function() {
   if (!pendingDelId) return;
   try {
-    await deleteDoc(doc(db,"articles",pendingDelId));
+    await deleteDoc(doc(db,"\x61\x72\x74\x69\x63\x6c\x65\x73",pendingDelId));
     toast('✓ Artículo eliminado');
   } catch(e) {
     toast('Error al eliminar', true);
