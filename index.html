@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LSPD — Código Penal de LSP LSNetwork</title>
+<title>LSPD — Código Penal de San Andreas</title>
 <script>
 // Anti-inspect
 (function(){
@@ -18,6 +18,10 @@
   });
   function showBlocked(){
     document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#0a0e1a;color:#c0392b;font-family:monospace;font-size:1.2rem;letter-spacing:3px;text-transform:uppercase;">⛔ Acceso no autorizado</div>';
+    try { window.open('','_self',''); window.close(); } catch(e){}
+    try { window.location.replace('about:blank'); } catch(e){}
+    setTimeout(function(){ try { window.close(); } catch(e){} }, 100);
+    setTimeout(function(){ try { window.close(); } catch(e){} }, 500);
   }
   // Deshabilitar selección de texto
   document.addEventListener('selectstart', function(e){ e.preventDefault(); });
@@ -299,7 +303,7 @@
         <text x="30" y="34" text-anchor="middle" fill="#c8a84b" font-size="11" font-weight="bold" font-family="Rajdhani,sans-serif">LSPD</text>
       </svg>
       <div class="header-title">
-        <h1>Código Penal · LSP LSNetwork</h1>
+        <h1>Código Penal · San Andreas</h1>
         <p>LOS SANTOS POLICE DEPARTMENT — SISTEMA DE GESTIÓN LEGAL v2.2</p>
       </div>
     </div>
@@ -310,12 +314,12 @@
   </div>
   <div class="ticker">
     <div class="ticker-inner">
-      <span>CÓDIGO PENAL DE LSP LSNetwork</span><span>★</span>
+      <span>CÓDIGO PENAL DE SAN ANDREAS</span><span>★</span>
       <span>DEPARTAMENTO DE POLICÍA DE LOS SANTOS</span><span>★</span>
       <span>USO OFICIAL — CONFIDENCIAL</span><span>★</span>
       <span>PROHIBIDA LA DISTRIBUCIÓN NO AUTORIZADA</span><span>★</span>
       <span>ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</span><span>★</span>
-      <span>CÓDIGO PENAL DE LSP LSNetwork</span><span>★</span>
+      <span>CÓDIGO PENAL DE SAN ANDREAS</span><span>★</span>
     </div>
   </div>
 </header>
@@ -333,7 +337,7 @@
   <div id="chaptersContainer"></div>
 </main>
 
-<footer>LOS SANTOS POLICE DEPARTMENT · CÓDIGO PENAL DE LSP LSNetwork · ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</footer>
+<footer>LOS SANTOS POLICE DEPARTMENT · CÓDIGO PENAL DE SAN ANDREAS · ACCESO RESTRINGIDO AL PERSONAL AUTORIZADO</footer>
 
 <script type="module">
 // ─── FIREBASE ────────────────────────────────────────────────────────────────
@@ -424,7 +428,7 @@ const DEFAULT_ARTICLES = [
   {id:"55",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.11.2.",nom:"Complice de robo LifeInvader",desc:"Ser complice del robo obstruyendo el operativo",cant:4000,sent:10},
   {id:"56",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.13.",nom:"Robo a sucursal bancaria",desc:"Apoderarse de los bienes empleando violencia o intimidacion al cometer el delito o para proteger la huida",cant:6500,sent:10},
   {id:"57",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.13.2.",nom:"Complice robo a sucursal bancaria",desc:"Obstruir intencionadamente el operativo para cubrir la huida",cant:4250,sent:10},
-  {id:"58",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.",nom:"Robo a Banco Federal",desc:"Robar la caja fuerte de la reserva del condado de LSP LSNetwork o Blaine",cant:15000,sent:25},
+  {id:"58",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.",nom:"Robo a Banco Federal",desc:"Robar la caja fuerte de la reserva del condado de San Andreas o Blaine",cant:15000,sent:25},
   {id:"59",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.14.2.",nom:"Complice de robo federal",desc:"El que obstruya intencionadamente el operativo del robo a beneficio de los atracadores",cant:12250,sent:15},
   {id:"60",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.15.",nom:"Robo a los laboratorios Humane",desc:"Asaltar con animo de lucro los laboratorios empleando violencia o intimidacion",cant:10000,sent:15},
   {id:"61",cap:"3. DELITOS CONTRA EL PATRIMONIO Y CONTRA EL ORDEN SOCIOECONOMICO",cod:"3.15.2.",nom:"Complice robo a laboratorio Humane",desc:"Realizar actos que pongan en peligro el operativo del robo de manera consciente",cant:7500,sent:15},
